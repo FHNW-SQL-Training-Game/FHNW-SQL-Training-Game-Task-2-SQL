@@ -13,7 +13,7 @@ const asQuery = (testContent, tableName = "") => {
     const columnTypes = [];
     const rows = testContent.split("\r\n").map(m => m.trim()).filter(m => m !== "");
     // Set TABLE Name
-    !tableName ? tableName = rows.shift() : rows.shift();
+    tableName = `${tableName}_${rows.shift()}`
 
     const header = rows.shift().split("|");
     const firstRow = rows[0];

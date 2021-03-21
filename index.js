@@ -4,8 +4,9 @@ const utils = require("./utitilities");
 
 // Consts
 const DESCRIPTION_REGEX = /(?<=DESCRIPTION {)[^}]*(?=})/;
-const TABLE_REGEX = /(?<=TABLE {)[^}]*(?=})/;
-const RESULT_REGEX = /(?<=TABLE {)[^}]*(?=})/;
+const TEST_REGEX = /TEST([\S\s]*?)RESULT/;
+const TABLE_REGEX = /(?<=TABLE {)[^}]*(?=})/g;
+const RESULT_REGEX = /(?<=RESULT {)[^}]*(?=})/;
 const INPUT_ARG = 2;
 const OUTPUT_ARG = 3;
 
@@ -42,10 +43,16 @@ taskFileNames.forEach(fileName => {
     const taskName = fileName.split(".")[0];
     const description = content.match(DESCRIPTION_REGEX)[0];
     const result = content.match(RESULT_REGEX)[0];
-    const table = content.match(TABLE_REGEX)[0];
+    const test = content.match(TEST_REGEX)[0];
+
 
     const markdownContent = utils.converToMarkDown(taskName, description, result);
-    const createQueryContent = utils.asQuery(table, taskName.replace("-", "_"));
+    let queryMapper = []
+    for (const match of test.matchAll(TABLE_REGEX)) {
+        queryMapper.push(utils.asQuery(match[0], taskName.replace("-", "_")));
+    }
+    const createQueryContent = queryMapper.join("\r\n");
+
 
     fs.writeFileSync(path.join(directoryOutputPath, `${taskName}.md`), markdownContent);
     fs.writeFileSync(path.join(directoryOutputPath, `${taskName}.sql`), createQueryContent);
