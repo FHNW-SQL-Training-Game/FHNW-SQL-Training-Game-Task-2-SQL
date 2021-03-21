@@ -28,28 +28,34 @@ const directoryOutputPath = path.join(__dirname, outputPath);
 if (!fs.existsSync(directoryOutputPath)) fs.mkdirSync(directoryOutputPath);
 
 // Read Input dir
-fs.readdir(directoryInputPath, function (err, fileNames) {
-    if (err) return console.log("Unable to scan directory: " + err);
-    // Filter task files
-    const taskFileNames = fileNames.filter((m) => m.endsWith(".task"));
-    // Loop trough each filenames
-    taskFileNames.forEach(function (fileName) {
-        // readfile
-        fs.readFile(path.join(directoryInputPath, fileName), "utf8", function (err, content) {
+const fileNames = fs.readdirSync(directoryInputPath)
+// Filter task files
+let taskFileNames = fileNames.filter((m) => m.endsWith(".task"));
+let masterSqlFile = [];
+// Loop trough each filenames
 
-            const taskName = fileName.split(".")[0];
-            const description = content.match(DESCRIPTION_REGEX)[0];
-            const result = content.match(RESULT_REGEX)[0];
-            const table = content.match(TABLE_REGEX)[0];
 
-            const markdownContent = utils.converToMarkDown(taskName, description, result);
-            const createQueryContent = utils.asQuery(table);
+taskFileNames.forEach(fileName => {
+    // readfile
+    const content = fs.readFileSync(path.join(directoryInputPath, fileName), "utf8")
 
-            fs.writeFileSync(path.join(directoryOutputPath, `${taskName}.md`), markdownContent);
-            fs.writeFileSync(path.join(directoryOutputPath, `${taskName}.sql`), createQueryContent);
-        });
-    });
-});
+    const taskName = fileName.split(".")[0];
+    const description = content.match(DESCRIPTION_REGEX)[0];
+    const result = content.match(RESULT_REGEX)[0];
+    const table = content.match(TABLE_REGEX)[0];
+
+    const markdownContent = utils.converToMarkDown(taskName, description, result);
+    const createQueryContent = utils.asQuery(table, taskName.replace("-", "_"));
+
+    fs.writeFileSync(path.join(directoryOutputPath, `${taskName}.md`), markdownContent);
+    fs.writeFileSync(path.join(directoryOutputPath, `${taskName}.sql`), createQueryContent);
+    masterSqlFile.push(`-- CREATE: ${taskName} --\r\n${createQueryContent}\r\n`);
+
+})
+
+
+fs.writeFileSync(path.join(directoryOutputPath, `000_master.sql`), masterSqlFile.join("\r\n"))
+
 
 
 

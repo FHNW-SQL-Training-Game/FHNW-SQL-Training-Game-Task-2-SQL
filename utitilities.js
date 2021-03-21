@@ -1,12 +1,11 @@
 const converToMarkDown =
     (name, description, result) => {
-        return `
-        # ${name}
-        ## Description \n
-        ${description}
-        ## Expected result \n
-        \`\`\`${result}\`\`\`
-        `;
+        return `\r
+# ${name}\r
+## Description\r
+${description}\r
+## Expected result\r
+\`\`\`\r${result}\r\`\`\``;
     }
 
 
@@ -21,15 +20,15 @@ const asQuery = (testContent, tableName = "") => {
     for (let i = 0; i < firstRow.length; i++) {
         const value = firstRow[i];
         if (isNaN(value)) {
-            columnTypes[i] = "TEXT";
+            columnTypes[i] = "VARCHAR";
         } else {
-            columnTypes[i] = "NUMBER";
+            columnTypes[i] = "INT";
         }
     }
 
     let columns = [];
     for (let i = 0; i < header.length; i++) {
-        columns.push(header[i] + " " + columnTypes[i]);
+        columns.push(header[i] + " " + columnTypes[i] + (columnTypes[i] == "VARCHAR" ? "(255)" : ""));
     }
 
     const queries = [];
@@ -40,12 +39,12 @@ const asQuery = (testContent, tableName = "") => {
         const valuesWithTypes = [];
         for (let i = 0; i < row.length; i++) {
             // Adds 'value' if TEXT and escapes ' if necessary, otherwise value (assuming number)
-            valuesWithTypes.push(columnTypes[i] === "TEXT" ? `'${row[i].split("'").join("\\''")}'` : row[i]);
+            valuesWithTypes.push(columnTypes[i] === "VARCHAR" ? `'${row[i].split("'").join("\\''")}'` : row[i]);
         }
         // example: INSERT INTO Table (col1, col2) VALUES ("value", 0);
         queries.push(`INSERT INTO ${tableName} (${header.join(",")}) VALUES (${valuesWithTypes.join(",")});`);
     }
-    return queries;
+    return queries.join("\r\n");
 }
 
 
